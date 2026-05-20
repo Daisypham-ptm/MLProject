@@ -7,6 +7,6 @@
 #### Git
 - git status
 - git add .
-- gitt add (tenfile).py
+- git add (tenfile).py
 - git commit -m "Noi dung commit"
 - git push origin main
