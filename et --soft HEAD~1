@@ -1,0 +1,23 @@
+[33mf4f2b60[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Remove artifacts from repository
+[33m83452cf[m Movie Recommendation System
+[33mab13fb7[m Add trained recommendation artifacts
+[33mbd74906[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Build content-based movie recommendation engine using TF-IDF and cosine similarity
+[33m8e30d87[m data transformation
+[33m55841f7[m data transformation
+[33me59347e[m Remove artifacts from tracking
+[33mb24cc32[m Data Ingestion
+[33meacee49[m Model Training commit
+[33m78db4fc[m Add EDA
+[33m2fb132e[m Update MT
+[33mb8dde4c[m EDA
+[33mbd15acb[m Update EDA
+[33mb44d7a8[m Add Readme
+[33m16e2ca3[m Update EDA
+[33m278f2b6[m Update EDA
+[33m28566be[m Add readme
+[33m5d25314[m Update EDA notebook
+[33m52de771[m Rèactor: Flatten project structure to single root level
+[33md358c37[m logging and exception
+[33m78c888f[m setup
+[33m5a20d1b[m Create .gitignore
+[33mcdd0fb1[m First commit

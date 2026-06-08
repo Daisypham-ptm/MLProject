@@ -4,7 +4,8 @@
 - .\MLProject\src\logger.py
 - pip install -r requirements.txt
 - python -m src.components.TF-IDF_trainer
-
+- streamlit run app.py
+  
 #### Git
 - git status
 - git add .
