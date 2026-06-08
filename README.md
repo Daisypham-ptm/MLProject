@@ -3,6 +3,7 @@
 - venv\Scripts\activate
 - .\MLProject\src\logger.py
 - pip install -r requirements.txt
+- python -m src.components.TF-IDF_trainer
 
 #### Git
 - git status

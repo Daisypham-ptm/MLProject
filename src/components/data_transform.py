@@ -1,110 +1,131 @@
+import os
 import sys
 from dataclasses import dataclass
 
-import numpy as np
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.exception import CustomException
 from src.logger import logging
-import os
-
 from src.utils import save_object
+
 
 @dataclass
 class DataTransformationConfig:
-    preprocessor_obj_file_path = os.path.join('artifacts', "preprocessor.pkl")
+    movie_features_path = os.path.join(
+        "artifacts",
+        "movie_features.pkl"
+    )
+
 
 class DataTransformation:
     def __init__(self):
-        self.data_transformation_config=DataTransformationConfig()
+        self.data_transformation_config = (
+            DataTransformationConfig()
+        )
 
-    def get_data_transformer_object(self):
-        """ 
-        This funciton is responsible for data transformation
-        """
+    def initiate_data_transformation(
+        self,
+        movies,
+        ratings,
+        tags
+    ):
+
         try:
-            numerical_columns = [
-                "avg_rating",
-                "rating_count",
-                "tag_count"
-            ]
-            # categorical_columns = []
-            num_pipeline = Pipeline(
-                steps=[
-                    ("imputer", SimpleImputer(strategy="median"))
-                    ("scaler", StandardScaler())
-                ]
-            )
-            # cat_pipeline = Pipeline(          # dùng khi là dạng categorical/text
-            #     steps=[
-            #         ("imputer", SimpleImputer()),
-            #         ("one_hot_encoder", OneHotEncoder()),
-            #         ("scaler", StandardScaler())
-            #     ]
-            # )
-            logging.info(f"Numerical columns: {numerical_columns}")
-            # logging.info(f"Categorical columns: {categorical_columns}")
 
-            preprocessor=ColumnTransformer(
-                [
-                    ("num_pipeline", num_pipeline, numerical_columns)
-                    # ("cat_pipeline", cat_pipeline, categorical_columns)
-                ]
+            logging.info(
+                "Starting data transformation"
             )
 
-            return preprocessor
-        
-        except Exception as e:
-            raise CustomException(e, sys)
-        
-    def initiate_data_transformation(self, train_path, test_path):
-        try:
-            train_df = pd.read_csv(train_path)
-            test_df = pd.read_csv(test_path)
+            rating_stats = (
+                ratings
+                .groupby("movieId")
+                .agg(
+                    avg_rating=("rating", "mean"),
+                    rating_count=("rating", "count")
+                )
+                .reset_index()
+            )
 
-            logging.info("Read train and test data completed")
-            logging.info("Obtaining preprocessing object")
+            tag_stats = (
+                tags
+                .groupby("movieId")
+                .agg(
+                    tag_count=("tag", "count")
+                )
+                .reset_index()
+            )
+
+            movie_features = (
+                movies
+                .merge(
+                    rating_stats,
+                    on="movieId",
+                    how="left"
+                )
+                .merge(
+                    tag_stats,
+                    on="movieId",
+                    how="left"
+                )
+            )
+
+            movie_features["avg_rating"] = (
+                movie_features["avg_rating"]
+                .fillna(0)
+            )
+
+            movie_features["rating_count"] = (
+                movie_features["rating_count"]
+                .fillna(0)
+            )
+
+            movie_features["tag_count"] = (
+                movie_features["tag_count"]
+                .fillna(0)
+            )
+
+            tag_text = (
+                tags
+                .groupby("movieId")["tag"]
+                .apply(
+                    lambda x: " ".join(
+                        x.astype(str)
+                    )
+                )
+                .reset_index()
+            )
+
+            movie_features = movie_features.merge(
+                tag_text,
+                on="movieId",
+                how="left"
+            )
+
+            movie_features["tag"] = (
+                movie_features["tag"]
+                .fillna("")
+            )
+
+            movie_features["content"] = (
+                movie_features["genres"]
+                + " "
+                + movie_features["tag"]
+            )
+
+            logging.info(
+                "Saving movie features"
+            )
 
             save_object(
-
+                file_path=self.data_transformation_config.movie_features_path,
+                obj=movie_features
             )
 
-            preprocessing_obj = self.get_data_transformer_object()
-
-            target_column_name = "engagement_score"
-            numerical_columns = ["avg_rating", "rating_count", "tag_count"]
-
-            input_feature_train_df = train_df.drop(columns=[target_column_name], axis=1)
-            target_feature_train_df = train_df[target_column_name]
-
-            input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
-            target_feature_test_df = test_df[target_column_name]
-
-            logging.info(f"Applying preprocessing object on training dataframe and testing dataframe.")
-
-            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
-            input_feature_test_arr = preprocessing_obj.transform(input_feature_train_df)
-
-            train_arr = np.c_[
-                input_feature_train_arr, np.array(target_feature_train_df)
-            ]
-            test_arr = np.c_[input_feature_test_arr, np.array(target_feature_test_df)]
-
-            logging.info(f"Saved preprocessing object.")
-
-            save_object(
-                file_path=self.data_transformation_config.preprocessor_obj_file_path,
-                obj=preprocessing_obj
+            logging.info(
+                "Data transformation completed"
             )
 
-            return(
-                train_arr,
-                test_arr,
-                self.data_transformation_config.preprocessor_obj_file_path,
-            )
+            return movie_features
+
         except Exception as e:
             raise CustomException(e, sys)
